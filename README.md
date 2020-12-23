@@ -11,4 +11,4 @@ Graph:
 class glWidget
 
 
-![Screenshot](emit.PNG "Green photon moves to the Anode")
+![Screenshot](emit.PNG "Green photon moves to the Cathode where strikes the electron.")
