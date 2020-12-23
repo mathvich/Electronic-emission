@@ -9,3 +9,6 @@ class processingThread
 
 Graph:
 class glWidget
+
+
+![alt text](screenshots/emit.png "")
