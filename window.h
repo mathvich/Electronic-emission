@@ -6,8 +6,8 @@
 #include <QTimer>
 #include <QSlider>
 #include <QLabel>
+#include <QKeyEvent>
 #include "glwidget.h"
-#include "plotwidget.h"
 #include "world.h"
 #include "rainbow.h"
 
@@ -16,12 +16,10 @@ class window : public QWidget
     Q_OBJECT
 
     glWidget *GLWidget;
-    plotWidget *PlotWidget;
     QHBoxLayout *MainLayout;
     QSlider *PotentialDifference;
     QLabel *PotentialDifferenceLabel;
     QSlider *Temperature;
-    int currentGraph;
     QLabel *TemperatureLabel;
     QLabel *CurrentTemperatureLabel;
     QLabel *IntensityLabel;
@@ -36,7 +34,6 @@ class window : public QWidget
     QTimer *FPScountTimer;    
     float Tfilter;
 
-    void initPlotWidget();
     void initControls();
     void initFPS();
 
@@ -49,10 +46,8 @@ public:
     ~window();
 
 public slots:
-    void temperatureChangeHandle();
     void updatePlots();
     void FPShandle();
-    void refreshPlot();
     void updateControls();
     void setAccuracy(int value);
     void updateCurrentTemperature(float value);

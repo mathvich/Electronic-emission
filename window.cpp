@@ -16,13 +16,11 @@ window::window(QWidget *parent)
     GLWidget->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
 
     initControls();
-    initPlotWidget();
 
     MainLayout = new QHBoxLayout;
     MainLayout->addWidget(GLWidget);
 
     QLayout *controlsLayout = new QVBoxLayout;
-    controlsLayout->addWidget(PlotWidget);
     controlsLayout->addWidget(PotentialDifferenceLabel);
     controlsLayout->addWidget(PotentialDifference);
     //controlsLayout->addWidget(TemperatureLabel);
@@ -50,9 +48,6 @@ window::window(QWidget *parent)
     connect(PotentialDifference, SIGNAL(valueChanged(int)), World, SLOT(setU(int)));
     connect(Temperature, SIGNAL(valueChanged(int)), this, SLOT(updateControls()));
     connect(PotentialDifference, SIGNAL(valueChanged(int)), this, SLOT(updateControls()));
-    connect(Temperature, SIGNAL(valueChanged(int)), this, SLOT(refreshPlot()));
-    connect(Temperature, SIGNAL(valueChanged(int)), this, SLOT(temperatureChangeHandle()));
-    connect(PotentialDifference, SIGNAL(valueChanged(int)), this, SLOT(refreshPlot()));
     connect(Intensity, SIGNAL(valueChanged(int)), World, SLOT(setIntensity(int)));
     connect(Intensity, SIGNAL(valueChanged(int)), this, SLOT(updateControls()));
     connect(Frequency, SIGNAL(valueChanged(int)), World, SLOT(setFrequency(int)));
@@ -82,13 +77,6 @@ window::~window()
 {
 }
 
-void window::temperatureChangeHandle()
-{
-    PlotWidget->graph(currentGraph)->setPen(QPen(QColor(124, 124, 124), 2));
-    currentGraph = 1 - currentGraph;
-    PlotWidget->graph(currentGraph)->setPen(QPen(QColor(0, 0, 0), 2));
-    PlotWidget->graph(currentGraph)->data()->clear();
-}
 
 void window::updateControls()
 {
@@ -103,27 +91,8 @@ void window::updateControls()
     //FrequencyRainbow->repaint();
 }
 
-void window::initPlotWidget()
-{
-    PlotWidget = new plotWidget;
-    //PlotWidget->setMinimumHeight(200);
-    //PlotWidget->setMinimumWidth(500);
-    PlotWidget->xAxis->setLabel("Напряжение Катод-Анод U");
-    PlotWidget->yAxis->setLabel("Сила тока I(U)");
-    PlotWidget->xAxis->setRange(-0.5, 1.0);
-    //PlotWidget->yAxis->setScaleType(QCPAxis::stLogarithmic);
-    PlotWidget->yAxis->setRange(-0.1, 1.0);
-    PlotWidget->addGraph(PlotWidget->xAxis, PlotWidget->yAxis);
-    PlotWidget->addGraph(PlotWidget->xAxis, PlotWidget->yAxis);
-    PlotWidget->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
-    PlotWidget->graph(1)->setPen(QPen(QColor(255, 110, 40), 2));
-
-    refreshPlot();
-}
-
 void window::initControls()
-{
-    currentGraph = 1;
+{    
     TemperatureLabel = new QLabel();
     Temperature = new QSlider(Qt::Horizontal);
     Temperature->setMinimum(0);
@@ -199,62 +168,6 @@ void window::updatePlots()
     //PlotWidget->update();
 
     this->update();
-}
-
-void window::refreshPlot()
-{
-    //QPlot
-    // Particle Density
-    /*
-    PlotWidget->graph(0)->data()->clear();
-    int density[24];
-    for (int i=0; i<24; ++i)
-        density[i]=0;
-    for (int i=0; i<World->Nparticles; ++i)
-    {
-        int ind = 4+int(World->aDraw[i].R.y*2.0);
-        if (ind < 0)
-            ind = 0;
-        if (ind > 23)
-            ind = 23;
-        density[ind]++;
-    }
-    for (int i=0; i<24; ++i)
-        PlotWidget->graph(0)->addData(i/2.0 - 2.0, density[i]);
-    */
-
-    // DATA line
-    //int Npoints=300;
-    float T = float(this->Temperature->value())/float(this->Temperature->maximum());    
-    T *= T; //square T, coefficient Deshmanna-Richardson'a
-
-    /*for (int i=0; i<Npoints; ++i)
-        PlotWidget->graph(0)->addData(-1.0+float(i)/float(Npoints), 0.0);
-
-    for (int i=0; i<Npoints; ++i)
-    {
-        float ii = float(i)/float(Npoints);
-        if (i < Npoints/2)
-            PlotWidget->graph(0)->addData(ii, T*ii*sqrt(ii));
-        else
-            PlotWidget->graph(0)->addData(ii, T*ii*sqrt(ii));
-    }
-    */
-
-
-    // cross
-    float x = float(this->PotentialDifference->value())/float(this->PotentialDifference->maximum());
-    PlotWidget->xCross = x;
-    float y=0;
-    if (x>0)
-        y = sqrt(x+0.1)-0.315;
-
-    PlotWidget->yCross = y;
-
-    //DATA line islandic
-    PlotWidget->graph(currentGraph)->addData(x, y);
-
-    PlotWidget->replot();
 }
 
 void window::keyPressEvent(QKeyEvent *event)

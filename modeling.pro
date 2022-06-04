@@ -16,8 +16,6 @@ SOURCES += main.cpp\
         window.cpp \
     glwidget.cpp \
     point.cpp \
-    qcustomplot.cpp \
-    plotwidget.cpp \
     particle.cpp \
     world.cpp \
     processingthread.cpp \
@@ -26,8 +24,6 @@ SOURCES += main.cpp\
 HEADERS  += window.h \
     glwidget.h \
     point.h \
-    qcustomplot.h \
-    plotwidget.h \
     particle.h \
     world.h \
     processingthread.h \
