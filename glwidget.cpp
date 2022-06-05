@@ -46,29 +46,18 @@ void glWidget::paintGL()
         glTranslatef(PCamera.x, PCamera.y, 0.0/*PCamera.z*/);
 
         World->drawParticles();
-        //Cathode
-        /*
-        float G = Tpercent*0.8;
-        if (G>0.8)
-            G = 0.8;
-        float B = 0.6*Tpercent*Tpercent*Tpercent;
-        if (B>0.6)
-            B = 0.6;
-        glColor3f(0.9, G, B);
-        */
+
+        //Cathode        
         glColor3f(0.4, 0.4, 0.4);
         drawSquarePolygon(0.0, 0.0, 1.0);
+
         //Anode
-        //glColor3f(0.0, 0.4, 1.0);
         glColor3f(0.4, 0.4, 0.4);
         drawSquarePolygon(0.0, 9.0, 3.0);
 
         glColor3f(1.0, 1.0, 1.0);
-        renderText(-2.0, -0.5, 0.0, "Катод", QFont("Arial", 15));
-        renderText(-2.0, 5.0, 0.0, "Анод", QFont("Arial", 15));
-        //Metrics->drawAxes();
-        //Metrics->drawPlanes();
-        //Metrics->drawCenter();
+        renderText(-2.0, -0.5, 0.0, "Cathode", QFont("Arial", 15));
+        renderText(-2.0, 5.0, 0.0, "Anode", QFont("Arial", 15));
     glPopMatrix();
 
 }

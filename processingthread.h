@@ -35,7 +35,6 @@ public:
     int Nphotons;
 
     processingThread(int _Nparticles, particle *array, int _Nphotons, particle *photons, float _dt=1e-4);
-    void temperatureInfluence(float velocityMultiplier);
 
     void movePhotons(particle *_p, float _dt);
     void photonEnabler(int _N, float _dt);

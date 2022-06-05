@@ -27,13 +27,6 @@ processingThread::processingThread(int _Nparticles, particle *array, int _Nphoto
     k4 = new particle[Nparticles];
 }
 
-void processingThread::temperatureInfluence(float velocityMultiplier)
-{
-    for (int i=0; i<Nparticles; ++i)
-        if ((a[i].R.x > -1.0) && (a[i].R.x < 1.0) && (a[i].R.y > -1.0) && (a[i].R.y < 1.0))
-            a[i].dR = a[i].dR * velocityMultiplier;
-}
-
 void processingThread::setdt(float _dt)
 {
     dt = _dt;
@@ -61,17 +54,11 @@ void processingThread::setFrequency(float _F)
 
 void processingThread::fKernel(particle *in, particle *out, int i)
 {
-    const float e = 1.35*1e-0;//1e-7;	// коэффициент потенциала отталкивания (e/r)^n
+    const float e = 1.35*1e-0;//1e-7;	// multiplier for (e/r)^n
     const float er = 1.0;	// er*(e/r)^n
-    const float n = 1;		// степень потенциала e*1/r^n
 
     const float deepn = 1.6*1e+3;
     const float width = 1.02;
-
-    //const float nu = 1.0;
-
-    //int i = threadIdx.x;
-    //int i = threadIdx.x + blockIdx.x * blockDim.x;
 
     out[i].R = in[i].dR;
 
@@ -97,16 +84,6 @@ void processingThread::fKernel(particle *in, particle *out, int i)
         ttmp *= ttmp; // hexa
         out[i].dR.y += -16.0*deepn*0.1*ttmp / in[i].R.y / (ttmp + 1.0) / (ttmp + 1.0);
     }
-
-    // Ionic positive charge hold
-
-    /*
-    //if ((in[i].R.x < -1.0) && (in[i].R.x > 1.0) && (in[i].R.y < -1.0) && (in[i].R.y > 1.0))   
-    {
-        float rr = in[i].R.moduleXY() / 1.7;
-        out[i].dR = out[i].dR + in[i].R*1.0*deepn*((-2.0) / ((rr*rr + 1.0) * (rr*rr + 1.0)));
-    }*/
-
 
     // Cathode-Anode electric field
     if ((in[i].R.y > 0.990) && (in[i].R.y < 5.0))
@@ -143,7 +120,6 @@ void processingThread::fKernel(particle *in, particle *out, int i)
         if (delta < -3.0)
             delta = -3.0;
 
-    //float factor = 1.0 + 0.0001*(delta);
     out[i].dR = out[i].dR + in[i].dR * (1.0*delta);
 
 
@@ -155,6 +131,7 @@ void processingThread::fKernel(particle *in, particle *out, int i)
             point r = in[i].R - in[j].R;
             //float rm = r.module();
             //out[i].dR = out[i].dR + r*n*er*expf(-(n + 2.0)*logf(rm/e));
+
             //electrostatic
             float rm = r.module()/e;
             out[i].dR = out[i].dR + r*(er/(rm*rm*rm));
@@ -203,11 +180,11 @@ void processingThread::photonEnabler(int _N, float _dt)
         }
     }
     lastPhotonTime -= _dt;
-    //qDebug() << count;
 }
 
 void processingThread::run()
 {
+    // Euler's method
     /*
     for (int j=0; j<1000; ++j)
     {
@@ -230,9 +207,7 @@ void processingThread::run()
             count = 1001;
         }
 
-        // Рунге-Кутта 4 порядка.
-        // Цикл подготовлен к распараллеливанию,
-        // но выполняется в одном потоке.
+        // Runge-Kutta 4
         for (int i=0; i<Nparticles; ++i)
             fKernel(a, k1, i);
         for (int i = 0; i<Nparticles; ++i)
@@ -259,8 +234,6 @@ void processingThread::run()
         movePhotons(p, dt);
         photonEnabler(Intensity, dt);
         photonInteract();
-
-        //temperatureInfluence(factor);
 
         framesDone++;
     }

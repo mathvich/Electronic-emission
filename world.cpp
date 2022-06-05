@@ -3,14 +3,12 @@
 #include <stdlib.h>
 #include <math.h>
 #include <QtOpenGL>
-//#include <QDebug>
 
 world::world(int _Nparticles, int _Nphotons, float _SPDparticles, float _BOXsize):Nparticles(_Nparticles),
     Nphotons(_Nphotons),
     SPDparticles(_SPDparticles),
     BOXsize(_BOXsize)
-{
-    //memory allocation
+{    
     a = new particle[Nparticles];
     photons = new particle[Nphotons];
     color = 0;
@@ -33,8 +31,6 @@ world::world(int _Nparticles, int _Nphotons, float _SPDparticles, float _BOXsize
     TimerMeasure->setInterval(250);
     connect(TimerMeasure, SIGNAL(timeout()), this, SLOT(measureHandle()));
     TimerMeasure->start();
-
-    //temperatureMeasure();
 }
 
 void world::initParticlePositions()
@@ -62,8 +58,7 @@ void world::initParticlePositions()
         // speeds
         a[i].dR = point(SPDparticles*(-1.0 + 2.0*float(rand()) / RAND_MAX),
                         SPDparticles*(-1.0 + 2.0*float(rand()) / RAND_MAX)/*,
-                        0.0*SPDparticles*(-1.0 + 2.0*float(rand()) / RAND_MAX)*/);
-        //a[i].dR = 0.0;
+                        0.0*SPDparticles*(-1.0 + 2.0*float(rand()) / RAND_MAX)*/);        
     }
 }
 

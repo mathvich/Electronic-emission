@@ -23,7 +23,6 @@ void rainbow::paintEvent(QPaintEvent *event)
             int R = 255 - G;
 
             painter.setPen(QPen(QColor(R, G, 0)));
-            painter.drawLine(QPoint(i, 0), QPoint(i, h));            
         }
         else
         {
@@ -31,8 +30,8 @@ void rainbow::paintEvent(QPaintEvent *event)
             int G = 255 - B;
 
             painter.setPen(QPen(QColor(0, G, B)));
-            painter.drawLine(QPoint(i, 0), QPoint(i, h));
         }
+        painter.drawLine(QPoint(i, 0), QPoint(i, h));
     }
 
     painter.end();
