@@ -11,25 +11,26 @@ void rainbow::paintEvent(QPaintEvent *event)
 
     painter.begin(this);
     painter.setRenderHint(QPainter::Antialiasing);
-    //painter.fillRect(event->rect(), QBrush(QColor(54, 54, 35)));
 
-    //comfort-sugar
     int h = this->height();
     int w = this->width();
 
     for (int i=0; i<w; ++i)
     {
-        if (i<w/2)
-        {
-            painter.setPen(QPen(QColor(int(255.0*(1.0 - float(i)/float(w/2.0))),
-                                       int(255.0*(float(i)/float(w/2.0))),
-                                       0)));
-            painter.drawLine(QPoint(i, 0), QPoint(i, h));
+        if (i <= w/2)
+        {            
+            int G = 255.0*(float(i)/(w/2.0));
+            int R = 255 - G;
+
+            painter.setPen(QPen(QColor(R, G, 0)));
+            painter.drawLine(QPoint(i, 0), QPoint(i, h));            
         }
         else
         {
-            painter.setPen(QPen(QColor(0, int(255.0*(1.0 - float(i-w/2.0)/float(w/2.0))),
-                                       int(255.0*(float(i-w/2.0)/float(w/2.0))))));
+            int B = 255.0*(float(i - w/2.0)/(w/2.0));
+            int G = 255 - B;
+
+            painter.setPen(QPen(QColor(0, G, B)));
             painter.drawLine(QPoint(i, 0), QPoint(i, h));
         }
     }
