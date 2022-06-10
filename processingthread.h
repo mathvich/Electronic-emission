@@ -11,7 +11,7 @@ class processingThread : public QThread
     Q_OBJECT
 
 private:
-    float dt;    
+    float dt;
     float T, U;
     int Intensity;
     float Frequency;

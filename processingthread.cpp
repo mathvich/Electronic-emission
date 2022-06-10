@@ -61,6 +61,11 @@ double hexDegree(double x)
     return x;
 }
 
+double sqrDegree(double x)
+{
+    return x*x;
+}
+
 void processingThread::fKernel(particle *in, particle *out, int i)
 {
     const float e = 1.35*1e-0;//1e-7;	// multiplier for (e/r)^n
@@ -77,19 +82,24 @@ void processingThread::fKernel(particle *in, particle *out, int i)
 
     float ttmp;
     // Metal hold Cathode
-    if ((in[i].R.x > -1.0) && (in[i].R.x < 1.0) && (in[i].R.y > -1.0) && (in[i].R.y < 1.0))
+    if ((in[i].R.x > -1.0) && (in[i].R.x < 1.0)
+            && (in[i].R.y > -1.0) && (in[i].R.y < 1.0))
     {
         ttmp = hexDegree( in[i].R.x / width );
-        out[i].dR.x += -16.0*deepn*0.1*ttmp / in[i].R.x / (ttmp + 1.0) / (ttmp + 1.0);
+        out[i].dR.x += -16.0*deepn*0.1*ttmp / in[i].R.x / sqrDegree(ttmp + 1.0);
 
         ttmp = hexDegree( in[i].R.y / width );
-        out[i].dR.y += -16.0*deepn*0.1*ttmp / in[i].R.y / (ttmp + 1.0) / (ttmp + 1.0);
+        out[i].dR.y += -16.0*deepn*0.1*ttmp / in[i].R.y / sqrDegree(ttmp + 1.0);
     }
+
+
 
     // Cathode-Anode electric field
     if ((in[i].R.y > 0.990) && (in[i].R.y < 5.0))
         out[i].dR.y += U;
-    if ((in[i].R.y > 0.0) && (in[i].R.y < 1.0) && ((in[i].R.x < -1.0) || (in[i].R.x > 1.0)))
+
+    if ((in[i].R.y > 0.0) && (in[i].R.y < 1.0)
+            && ((in[i].R.x < -1.0) || (in[i].R.x > 1.0)))
         out[i].dR.y += U*(in[i].R.y);
 
     if (relaxation)
