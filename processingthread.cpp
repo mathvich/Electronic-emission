@@ -1,7 +1,7 @@
 #include "processingthread.h"
 #include <math.h>
 
-processingThread::processingThread(int _Nparticles, particle *array, int _Nphotons, particle *photons, float _dt)
+processingThread::processingThread(int _particlesNumber, particle *_particles, int _photonsNumber, particle *_photons, float _dt)
 {
     //Nthreads = QThread::idealThreadCount();
 
@@ -13,17 +13,16 @@ processingThread::processingThread(int _Nparticles, particle *array, int _Nphoto
 
     dt = _dt;
 
-    Nphotons = _Nphotons;
-    p = photons;
+    photonsNumber = _photonsNumber;
+    photons = _photons;
 
-    Nparticles = _Nparticles;
-    a = array;
-    b = new particle[Nparticles];
-    arg = new particle[Nparticles];
-    k1 = new particle[Nparticles];
-    k2 = new particle[Nparticles];
-    k3 = new particle[Nparticles];
-    k4 = new particle[Nparticles];
+    particlesNumber = _particlesNumber;
+    particles = _particles;
+    particlesAux = new particle[particlesNumber];
+    k1 = new particle[particlesNumber];
+    k2 = new particle[particlesNumber];
+    k3 = new particle[particlesNumber];
+    k4 = new particle[particlesNumber];
 }
 
 void processingThread::setdt(float _dt)
@@ -43,12 +42,12 @@ void processingThread::setU(int _U)
 
 void processingThread::setIntensity(int _N)
 {
-    Intensity = _N;
+    intensity = _N;
 }
 
 void processingThread::setFrequency(float _F)
 {
-    Frequency = _F;
+    frequency = _F;
 }
 
 double hexDegree(double x)
@@ -66,7 +65,7 @@ double sqrDegree(double x)
     return x*x;
 }
 
-void processingThread::fKernel(particle *in, particle *out, int i)
+void processingThread::forceKernel(particle *in, particle *out, int i)
 {
     const float e = 1.35*1e-0;//1e-7;	// multiplier for (e/r)^n
     const float er = 1.0;	// er*(e/r)^n
@@ -135,7 +134,7 @@ void processingThread::fKernel(particle *in, particle *out, int i)
 
 
     // Particle interaction
-    for (int j = 0; j < Nparticles; ++j)
+    for (int j = 0; j < particlesNumber; ++j)
     {
         if (j != i)
         {
@@ -161,7 +160,7 @@ void processingThread::sumKernel(particle *in1, particle *in2, particle *out, fl
 
 void processingThread::movePhotons(particle *_p, float _dt)
 {
-    for (int i=0; i<Nphotons; ++i)
+    for (int i=0; i<photonsNumber; ++i)
         if (_p[i].enabled)
             _p[i].R = _p[i].R + _p[i].dR * _dt;
 }
@@ -173,15 +172,15 @@ void processingThread::photonEnabler(int _N, float _dt)
     if (lastPhotonTime < 0.0)
     {
         int count = 0;
-        for (int i=0; i<Nphotons; ++i)
-            count += p[i].enabled;
+        for (int i=0; i<photonsNumber; ++i)
+            count += photons[i].enabled;
 
-        for (int i=0; i<Nphotons; ++i)
+        for (int i=0; i<photonsNumber; ++i)
         {
             if (1)//count < _N)
-                if (p[i].enabled == false)
+                if (photons[i].enabled == false)
                 {
-                    p[i].initPhoton(true);
+                    photons[i].initPhoton(true);
                     lastPhotonTime = 0.25/float(_N+1.0);
                     break;
                     ++count;
@@ -199,10 +198,11 @@ void processingThread::run()
     /*
     for (int j=0; j<1000; ++j)
     {
-        for (int i=0; i<Nparticles; ++i)
-            fKernel(a, k1, i);
-        for (int i = 0; i<Nparticles; ++i)
-            sumKernel(a, k1, arg, dt, i);
+        for (int i=0; i<particlesNumber; ++i)
+            forceKernel(particles, k1, i);
+        for (int i = 0; i<particlesNumber; ++i)
+            sumKernel(particles, k1, particlesAux, dt, i);
+        swap( particles, particlesAux );
     }*/
 
     unsigned int count = 0;
@@ -219,31 +219,42 @@ void processingThread::run()
         }
 
         // Runge-Kutta 4
-        for (int i=0; i<Nparticles; ++i)
-            fKernel(a, k1, i);
-        for (int i = 0; i<Nparticles; ++i)
-            sumKernel(a, k1, arg, dt / 2.0, i);
-        for (int i = 0; i<Nparticles; ++i)
-            fKernel(arg, k2, i);
-        for (int i = 0; i<Nparticles; ++i)
-            sumKernel(a, k2, arg, dt / 2.0, i);
-        for (int i = 0; i<Nparticles; ++i)
-            fKernel(arg, k3, i);
-        for (int i = 0; i<Nparticles; ++i)
-            sumKernel(a, k3, arg, dt / 1.0, i);
-        for (int i = 0; i<Nparticles; ++i)
-            fKernel(arg, k4, i);
-        for (int i = 0; i<Nparticles; ++i)
-            sumKernel(a, k1, b, dt / 6.0, i);
-        for (int i = 0; i<Nparticles; ++i)
-            sumKernel(b, k2, a, dt / 3.0, i);
-        for (int i = 0; i<Nparticles; ++i)
-            sumKernel(a, k3, b, dt / 3.0, i);
-        for (int i = 0; i<Nparticles; ++i)
-            sumKernel(b, k4, a, dt / 6.0, i);
+        for (int i=0; i < particlesNumber; ++i)
+            forceKernel(particles, k1, i);
+        for (int i = 0; i < particlesNumber; ++i)
+            sumKernel(particles, k1, particlesAux, dt / 2.0, i);
 
-        movePhotons(p, dt);
-        photonEnabler(Intensity, dt);
+        for (int i = 0; i < particlesNumber; ++i)
+            forceKernel(particlesAux, k2, i);
+        for (int i = 0; i < particlesNumber; ++i)
+            sumKernel(particles, k2, particlesAux, dt / 2.0, i);
+
+        for (int i = 0; i < particlesNumber; ++i)
+            forceKernel(particlesAux, k3, i);
+        for (int i = 0; i < particlesNumber; ++i)
+            sumKernel(particles, k3, particlesAux, dt / 1.0, i);
+
+        for (int i = 0; i < particlesNumber; ++i)
+            forceKernel(particlesAux, k4, i);
+
+
+
+        for (int i = 0; i < particlesNumber; ++i)
+            sumKernel(particles, k1, particlesAux, dt / 6.0, i);
+
+        for (int i = 0; i < particlesNumber; ++i)
+            sumKernel(particlesAux, k2, particles, dt / 3.0, i);
+
+        for (int i = 0; i < particlesNumber; ++i)
+            sumKernel(particles, k3, particlesAux, dt / 3.0, i);
+
+        for (int i = 0; i < particlesNumber; ++i)
+            sumKernel(particlesAux, k4, particles, dt / 6.0, i);
+
+
+
+        movePhotons(photons, dt);
+        photonEnabler(intensity, dt);
         photonInteract();
 
         framesDone++;
@@ -252,13 +263,13 @@ void processingThread::run()
 
 void processingThread::photonInteract()
 {
-    for (int i=0; i<Nphotons; ++i)
-        if (p[i].enabled)
-            for (int j=0; j<Nparticles; ++j)
-                if ((a[j].R - p[i].R).moduleXY() < (0.15/2.0))
+    for (int i=0; i<photonsNumber; ++i)
+        if (photons[i].enabled)
+            for (int j=0; j<particlesNumber; ++j)
+                if ((particles[j].R - photons[i].R).moduleXY() < (0.15/2.0))
                 {
-                    a[j].dR = a[j].dR + p[i].dR*0.8*Frequency;
-                    p[i].enabled = false;
+                    particles[j].dR = particles[j].dR + photons[i].dR*0.8*frequency;
+                    photons[i].enabled = false;
                 }
 }
 
