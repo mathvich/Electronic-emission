@@ -1,6 +1,5 @@
 #include "processingthread.h"
 #include <math.h>
-//#include <QDebug>
 
 processingThread::processingThread(int _Nparticles, particle *array, int _Nphotons, particle *photons, float _dt)
 {
@@ -52,6 +51,16 @@ void processingThread::setFrequency(float _F)
     Frequency = _F;
 }
 
+double hexDegree(double x)
+{
+    x *= x; // doub
+    x *= x; // quad
+    x *= x; // octa
+    x *= x; // hexa
+
+    return x;
+}
+
 void processingThread::fKernel(particle *in, particle *out, int i)
 {
     const float e = 1.35*1e-0;//1e-7;	// multiplier for (e/r)^n
@@ -70,18 +79,10 @@ void processingThread::fKernel(particle *in, particle *out, int i)
     // Metal hold Cathode
     if ((in[i].R.x > -1.0) && (in[i].R.x < 1.0) && (in[i].R.y > -1.0) && (in[i].R.y < 1.0))
     {
-        ttmp = in[i].R.x / width;
-        ttmp *= ttmp; // doub
-        ttmp *= ttmp; // quad
-        ttmp *= ttmp; // octa
-        ttmp *= ttmp; // hexa
+        ttmp = hexDegree( in[i].R.x / width );
         out[i].dR.x += -16.0*deepn*0.1*ttmp / in[i].R.x / (ttmp + 1.0) / (ttmp + 1.0);
 
-        ttmp = in[i].R.y / width;
-        ttmp *= ttmp; // doub
-        ttmp *= ttmp; // quad
-        ttmp *= ttmp; // octa
-        ttmp *= ttmp; // hexa
+        ttmp = hexDegree( in[i].R.y / width );
         out[i].dR.y += -16.0*deepn*0.1*ttmp / in[i].R.y / (ttmp + 1.0) / (ttmp + 1.0);
     }
 

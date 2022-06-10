@@ -74,7 +74,8 @@ float world::temperatureMeasure()
     int N = 1;
     for (int i=0; i<Nparticles; ++i)
     {
-        if ((a[i].R.x > -1.0) && (a[i].R.x < 1.0) && (a[i].R.y > -1.0) && (a[i].R.y < 1.0))
+        if ((a[i].R.x > -1.0) && (a[i].R.x < 1.0)
+                && (a[i].R.y > -1.0) && (a[i].R.y < 1.0))
         {
             float Ti = a[i].dR.sqrmodule();
             a[i].kineticEnergy = Ti;
@@ -126,13 +127,14 @@ void world::drawParticles()
     float R=0.0, G=0.0, B=0.0;
     if (color < 500)
     {
-        R = 1.0 - color/500.0;
         G = color/500.0;
+        R = 1.0 - G;
+
     }
     else
     {
-        G = 1.0 - (color-500.0)/500.0;
-        B = (color-500.0)/500.0;
+        B = (color - 500.0)/500.0;
+        G = 1.0 - B;
     }
     glColor3f(R, G, B);
     if (photons)

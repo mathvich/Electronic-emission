@@ -165,8 +165,6 @@ void window::initFPS()
 void window::updatePlots()
 {        
     GLWidget->update();
-    //PlotWidget->update();
-
     this->update();
 }
 
