@@ -183,7 +183,6 @@ void processingThread::run()
 
     unsigned int count = 0;
 
-
     while (this->isRunning())
     {
         if (count < 2000)
@@ -195,7 +194,6 @@ void processingThread::run()
         }
 
         // Runge-Kutta 4
-
         forceKernel(particles, k1);
 
         sumKernel(particles, k1, particlesAux, dt / 2.0);
@@ -211,7 +209,6 @@ void processingThread::run()
         sumKernel(particlesAux, k2, particles, dt / 3.0);
         sumKernel(particles, k3, particlesAux, dt / 3.0);
         sumKernel(particlesAux, k4, particles, dt / 6.0);
-
 
         movePhotons(photons, dt);
         photonEnabler(intensity, dt);
