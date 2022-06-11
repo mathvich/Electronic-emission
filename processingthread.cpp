@@ -3,7 +3,10 @@
 
 processingThread::processingThread(int _particlesNumber, particle *_particles, int _photonsNumber, particle *_photons, float _dt)
 {
-    //Nthreads = QThread::idealThreadCount();
+    int threadsNumber = QThread::idealThreadCount();
+    calculationThreads.resize(threadsNumber);
+    for (int i=0; i < threadsNumber; ++i)
+        calculationThreads[i] = new QThread;
 
     framesDone = 0;
     relaxation = true;
@@ -65,97 +68,157 @@ double sqrDegree(double x)
     return x*x;
 }
 
-void processingThread::forceKernel(particle *in, particle *out, int i)
+void processingThread::sumKernel(particle *in1, particle *in2, particle *out, float dt)
 {
-    const float e = 1.35*1e-0;//1e-7;	// multiplier for (e/r)^n
-    const float er = 1.0;	// er*(e/r)^n
+    //int i = threadIdx.x;
 
-    const float deepn = 1.6*1e+3;
-    const float width = 1.02;
-
-    out[i].R = in[i].dR;
-
-    /* ------------- Potentials --------------- */
-
-    out[i].dR = point();
-
-    float ttmp;
-    // Metal hold Cathode
-    if ((in[i].R.x > -1.0) && (in[i].R.x < 1.0)
-            && (in[i].R.y > -1.0) && (in[i].R.y < 1.0))
+    for (int i = 0; i < particlesNumber; ++i)
     {
-        ttmp = hexDegree( in[i].R.x / width );
-        out[i].dR.x += -16.0*deepn*0.1*ttmp / in[i].R.x / sqrDegree(ttmp + 1.0);
-
-        ttmp = hexDegree( in[i].R.y / width );
-        out[i].dR.y += -16.0*deepn*0.1*ttmp / in[i].R.y / sqrDegree(ttmp + 1.0);
+        out[i].R = in1[i].R + in2[i].R*dt;
+        out[i].dR = in1[i].dR + in2[i].dR*dt;
     }
+}
 
+void processingThread::forceKernel(particle *in, particle *out)
+{
+    //int i = threadIdx.x;
 
-
-    // Cathode-Anode electric field
-    if ((in[i].R.y > 0.990) && (in[i].R.y < 5.0))
-        out[i].dR.y += U;
-
-    if ((in[i].R.y > 0.0) && (in[i].R.y < 1.0)
-            && ((in[i].R.x < -1.0) || (in[i].R.x > 1.0)))
-        out[i].dR.y += U*(in[i].R.y);
-
-    if (relaxation)
+    for (int i=0; i < particlesNumber; ++i)
     {
-        const float W = 50.0;
-        const float L = 0.98;
-        // Dual infinite wall
-        out[i].dR.x += -W*exp(W*(in[i].R.x - L));
-        out[i].dR.x += W*exp(W*(-L - in[i].R.x));
-        out[i].dR.y += -W*exp(W*(in[i].R.y - L));
-        out[i].dR.y += W*exp(W*(-L - in[i].R.y));
+        const float e = 1.35*1e-0;//1e-7;	// multiplier for (e/r)^n
+        const float er = 1.0;	// er*(e/r)^n
 
-        // Friction
-        out[i].dR = out[i].dR + in[i].dR * (-5.0);
-    }
+        const float deepn = 1.6*1e+3;
+        const float width = 1.02;
 
-    /*
+        out[i].R = in[i].dR;
+
+        /* ------------- Potentials --------------- */
+
+        out[i].dR = point();
+
+        float ttmp;
+        // Metal hold Cathode
+        if ((in[i].R.x > -1.0) && (in[i].R.x < 1.0)
+                && (in[i].R.y > -1.0) && (in[i].R.y < 1.0))
+        {
+            ttmp = hexDegree( in[i].R.x / width );
+            out[i].dR.x += -16.0*deepn*0.1*ttmp / in[i].R.x / sqrDegree(ttmp + 1.0);
+
+            ttmp = hexDegree( in[i].R.y / width );
+            out[i].dR.y += -16.0*deepn*0.1*ttmp / in[i].R.y / sqrDegree(ttmp + 1.0);
+        }
+
+
+
+        // Cathode-Anode electric field
+        if ((in[i].R.y > 0.990) && (in[i].R.y < 5.0))
+            out[i].dR.y += U;
+
+        if ((in[i].R.y > 0.0) && (in[i].R.y < 1.0)
+                && ((in[i].R.x < -1.0) || (in[i].R.x > 1.0)))
+            out[i].dR.y += U*(in[i].R.y);
+
+        if (relaxation)
+        {
+            const float W = 50.0;
+            const float L = 0.98;
+            // Dual infinite wall
+            out[i].dR.x += -W*exp(W*(in[i].R.x - L));
+            out[i].dR.x += W*exp(W*(-L - in[i].R.x));
+            out[i].dR.y += -W*exp(W*(in[i].R.y - L));
+            out[i].dR.y += W*exp(W*(-L - in[i].R.y));
+
+            // Friction
+            out[i].dR = out[i].dR + in[i].dR * (-5.0);
+        }
+
+        /*
     // Cylindric
     float r = in[i].R.moduleXY();
     out[i].dR.x = -W*in[i].R.x / r*exp(W*(r - L));
     out[i].dR.y = -W*in[i].R.y / r*exp(W*(r - L));
     */
 
-    // Temperature influence
-    float delta = T-Tcurr;
-    if (delta > 3.0)
-        delta = 3.0;
-    else
-        if (delta < -3.0)
-            delta = -3.0;
+        // Temperature influence
+        float delta = T-Tcurr;
+        if (delta > 3.0)
+            delta = 3.0;
+        else
+            if (delta < -3.0)
+                delta = -3.0;
 
-    out[i].dR = out[i].dR + in[i].dR * (1.0*delta);
+        out[i].dR = out[i].dR + in[i].dR * (1.0*delta);
 
 
-    // Particle interaction
-    for (int j = 0; j < particlesNumber; ++j)
-    {
-        if (j != i)
+        // Particle interaction
+        for (int j = 0; j < particlesNumber; ++j)
         {
-            point r = in[i].R - in[j].R;
-            //float rm = r.module();
-            //out[i].dR = out[i].dR + r*n*er*expf(-(n + 2.0)*logf(rm/e));
+            if (j != i)
+            {
+                point r = in[i].R - in[j].R;
+                //float rm = r.module();
+                //out[i].dR = out[i].dR + r*n*er*expf(-(n + 2.0)*logf(rm/e));
 
-            //electrostatic
-            float rm = r.module()/e;
-            out[i].dR = out[i].dR + r*(er/(rm*rm*rm));
+                //electrostatic
+                float rm = r.module()/e;
+                out[i].dR = out[i].dR + r*(er/(rm*rm*rm));
+            }
         }
     }
 }
 
-void processingThread::sumKernel(particle *in1, particle *in2, particle *out, float dt, int i)
+void processingThread::run()
 {
-    //int i = threadIdx.x;
-    //int i = threadIdx.x + blockIdx.x * blockDim.x;
+    // Euler's method
+    /*
+    for (int j=0; j<1000; ++j)
+    {
+        for (int i=0; i<particlesNumber; ++i)
+            forceKernel(particles, k1, i);
+        for (int i = 0; i<particlesNumber; ++i)
+            sumKernel(particles, k1, particlesAux, dt, i);
+        swap( particles, particlesAux );
+    }*/
 
-    out[i].R = in1[i].R + in2[i].R*dt;
-    out[i].dR = in1[i].dR + in2[i].dR*dt;
+    unsigned int count = 0;
+
+
+    while (this->isRunning())
+    {
+        if (count < 2000)
+            count++;
+        else
+        {
+            relaxation = false;
+            count = 1001;
+        }
+
+        // Runge-Kutta 4
+
+        forceKernel(particles, k1);
+
+        sumKernel(particles, k1, particlesAux, dt / 2.0);
+        forceKernel(particlesAux, k2);
+
+        sumKernel(particles, k2, particlesAux, dt / 2.0);
+        forceKernel(particlesAux, k3);
+
+        sumKernel(particles, k3, particlesAux, dt / 1.0);
+        forceKernel(particlesAux, k4);
+
+        sumKernel(particles, k1, particlesAux, dt / 6.0);
+        sumKernel(particlesAux, k2, particles, dt / 3.0);
+        sumKernel(particles, k3, particlesAux, dt / 3.0);
+        sumKernel(particlesAux, k4, particles, dt / 6.0);
+
+
+        movePhotons(photons, dt);
+        photonEnabler(intensity, dt);
+        photonInteract();
+
+        framesDone++;
+    }
 }
 
 void processingThread::movePhotons(particle *_p, float _dt)
@@ -190,75 +253,6 @@ void processingThread::photonEnabler(int _N, float _dt)
         }
     }
     lastPhotonTime -= _dt;
-}
-
-void processingThread::run()
-{
-    // Euler's method
-    /*
-    for (int j=0; j<1000; ++j)
-    {
-        for (int i=0; i<particlesNumber; ++i)
-            forceKernel(particles, k1, i);
-        for (int i = 0; i<particlesNumber; ++i)
-            sumKernel(particles, k1, particlesAux, dt, i);
-        swap( particles, particlesAux );
-    }*/
-
-    unsigned int count = 0;
-
-
-    while (this->isRunning())
-    {
-        if (count < 2000)
-            count++;
-        else
-        {
-            relaxation = false;
-            count = 1001;
-        }
-
-        // Runge-Kutta 4
-        for (int i=0; i < particlesNumber; ++i)
-            forceKernel(particles, k1, i);
-        for (int i = 0; i < particlesNumber; ++i)
-            sumKernel(particles, k1, particlesAux, dt / 2.0, i);
-
-        for (int i = 0; i < particlesNumber; ++i)
-            forceKernel(particlesAux, k2, i);
-        for (int i = 0; i < particlesNumber; ++i)
-            sumKernel(particles, k2, particlesAux, dt / 2.0, i);
-
-        for (int i = 0; i < particlesNumber; ++i)
-            forceKernel(particlesAux, k3, i);
-        for (int i = 0; i < particlesNumber; ++i)
-            sumKernel(particles, k3, particlesAux, dt / 1.0, i);
-
-        for (int i = 0; i < particlesNumber; ++i)
-            forceKernel(particlesAux, k4, i);
-
-
-
-        for (int i = 0; i < particlesNumber; ++i)
-            sumKernel(particles, k1, particlesAux, dt / 6.0, i);
-
-        for (int i = 0; i < particlesNumber; ++i)
-            sumKernel(particlesAux, k2, particles, dt / 3.0, i);
-
-        for (int i = 0; i < particlesNumber; ++i)
-            sumKernel(particles, k3, particlesAux, dt / 3.0, i);
-
-        for (int i = 0; i < particlesNumber; ++i)
-            sumKernel(particlesAux, k4, particles, dt / 6.0, i);
-
-
-
-        movePhotons(photons, dt);
-        photonEnabler(intensity, dt);
-        photonInteract();
-
-        framesDone++;
-    }
 }
 
 void processingThread::photonInteract()

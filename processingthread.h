@@ -2,20 +2,22 @@
 #define PROCESSINGTHREAD_H
 
 #include <QThread>
+#include <vector>
 #include "particle.h"
-
-class world;
 
 class processingThread : public QThread
 {
     Q_OBJECT
 
 private:
+    std::vector<QThread*> calculationThreads;
+
     float dt;
     float T, U;
     int intensity;
     float frequency;
     unsigned long framesDone;
+
     particle *particles, *particlesAux, *k1, *k2, *k3, *k4;
     particle *photons;
 
@@ -40,8 +42,8 @@ public:
     void photonEnabler(int _N, float _dt);
     void photonInteract();
     void setArray(particle *_a);
-    void forceKernel(particle *in, particle *out, int i);
-    void sumKernel(particle *in1, particle *in2, particle *out, float dt, int i);
+    void forceKernel(particle *in, particle *out);
+    void sumKernel(particle *in1, particle *in2, particle *out, float dt);
 };
 
 #endif // PROCESSINGTHREAD_H
