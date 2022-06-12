@@ -43,14 +43,14 @@ void processingThread::setU(int _U)
     U = _U;
 }
 
-void processingThread::setIntensity(int _N)
+void processingThread::setIntensity(int _intensity)
 {
-    intensity = _N;
+    intensity = _intensity;
 }
 
-void processingThread::setFrequency(float _F)
+void processingThread::setFrequency(float _frequency)
 {
-    frequency = _F;
+    frequency = _frequency;
 }
 
 double hexDegree(double x)
@@ -216,11 +216,11 @@ void processingThread::run()
     }
 }
 
-void processingThread::movePhotons(particle *_p, float _dt)
+void processingThread::movePhotons(particle *_photons, float _dt)
 {
     for (int i=0; i<photonsNumber; ++i)
-        if (_p[i].enabled)
-            _p[i].R = _p[i].R + _p[i].dR * _dt;
+        if (_photons[i].enabled)
+            _photons[i].R = _photons[i].R + _photons[i].dR * _dt;
 }
 
 void processingThread::photonEnabler(int _N, float _dt)
