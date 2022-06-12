@@ -170,17 +170,6 @@ void processingThread::forceKernel(particle *in, particle *out)
 
 void processingThread::run()
 {
-    // Euler's method
-    /*
-    for (int j=0; j<1000; ++j)
-    {
-        for (int i=0; i<particlesNumber; ++i)
-            forceKernel(particles, k1, i);
-        for (int i = 0; i<particlesNumber; ++i)
-            sumKernel(particles, k1, particlesAux, dt, i);
-        swap( particles, particlesAux );
-    }*/
-
     unsigned int count = 0;
 
     while (this->isRunning())
@@ -193,22 +182,35 @@ void processingThread::run()
             count = 1001;
         }
 
-        // Runge-Kutta 4
-        forceKernel(particles, k1);
+        if (0)
+        {
+            // Euler's method
+            forceKernel(particles, k1);
+            sumKernel(particles, k1, particlesAux, dt);
 
-        sumKernel(particles, k1, particlesAux, dt / 2.0);
-        forceKernel(particlesAux, k2);
+            particle * tmp = particlesAux;
+            particlesAux = particles;
+            particles = tmp;
+        }
+        else
+        {
+            // Runge-Kutta 4
+            forceKernel(particles, k1);
 
-        sumKernel(particles, k2, particlesAux, dt / 2.0);
-        forceKernel(particlesAux, k3);
+            sumKernel(particles, k1, particlesAux, dt / 2.0);
+            forceKernel(particlesAux, k2);
 
-        sumKernel(particles, k3, particlesAux, dt / 1.0);
-        forceKernel(particlesAux, k4);
+            sumKernel(particles, k2, particlesAux, dt / 2.0);
+            forceKernel(particlesAux, k3);
 
-        sumKernel(particles, k1, particlesAux, dt / 6.0);
-        sumKernel(particlesAux, k2, particles, dt / 3.0);
-        sumKernel(particles, k3, particlesAux, dt / 3.0);
-        sumKernel(particlesAux, k4, particles, dt / 6.0);
+            sumKernel(particles, k3, particlesAux, dt / 1.0);
+            forceKernel(particlesAux, k4);
+
+            sumKernel(particles, k1, particlesAux, dt / 6.0);
+            sumKernel(particlesAux, k2, particles, dt / 3.0);
+            sumKernel(particles, k3, particlesAux, dt / 3.0);
+            sumKernel(particlesAux, k4, particles, dt / 6.0);
+        }
 
         movePhotons(photons, dt);
         photonEnabler(intensity, dt);
