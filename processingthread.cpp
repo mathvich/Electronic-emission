@@ -184,17 +184,13 @@ void processingThread::run()
 
         if (0)
         {
-            // Euler's method
+            // Euler's calculation method
             forceKernel(particles, k1);
-            sumKernel(particles, k1, particlesAux, dt);
-
-            particle * tmp = particlesAux;
-            particlesAux = particles;
-            particles = tmp;
+            sumKernel(particles, k1, particles, dt);
         }
         else
         {
-            // Runge-Kutta 4
+            // Runge-Kutta 4 calculation method
             forceKernel(particles, k1);
 
             sumKernel(particles, k1, particlesAux, dt / 2.0);
