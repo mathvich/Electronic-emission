@@ -7,7 +7,7 @@
 window::window(QWidget *parent)
     : QWidget(parent)
 {
-    this->setWindowTitle("Моделирование вакуумного фотодиода");
+    this->setWindowTitle("Initializing");
     Tfilter = 0.0;
 
     //Graphics
@@ -83,11 +83,11 @@ void window::updateControls()
     char tmp[20];
     float val = PotentialDifference->value();
     sprintf(tmp, "%d", int(val/50.0));
-    PotentialDifferenceLabel->setText("Напряжение (" + QString(tmp) + " В) : ");
+    PotentialDifferenceLabel->setText("Voltage (" + QString(tmp) + " V) : ");
 
-    IntensityLabel->setText("Интенсивность излучения (" + QString::number(1+Intensity->value()) + " ед.) : ");
+    IntensityLabel->setText("Radiation intensity (" + QString::number(1+Intensity->value()) + " units) : ");
 
-    FrequencyLabel->setText("Длина волны излучения (" + QString::number(int(6.0*140000.0/(1200.0+Frequency->value()))) + " нм) : ");
+    FrequencyLabel->setText("Radiation wavelength (" + QString::number(int(6.0*140000.0/(1200.0+Frequency->value()))) + " nm) : ");
     //FrequencyRainbow->repaint();
 }
 
@@ -132,7 +132,7 @@ void window::initControls()
     Accuracy->setMaximum(10);
     Accuracy->setValue(2);
     Accuracy->setMaximumWidth(500);
-    AccuracyLabel = new QLabel("\nШаг интегрирования по времени:");
+    AccuracyLabel = new QLabel("\nTimestep:");
 }
 
 void window::setAccuracy(int value)
@@ -151,7 +151,7 @@ void window::updateCurrentTemperature(float value)
     GLWidget->Tpercent = Tfilter/float(63.0);
     //sprintf(tmp, "%5.0f", Tfilter*15.878);
     sprintf(tmp, "%4d", int(Tfilter*15.878));
-    CurrentTemperatureLabel->setText("Текущая температура подогрева катода = " + QString(tmp));
+    CurrentTemperatureLabel->setText("Current Cathode heating temperature = " + QString(tmp));
 }
 
 void window::initFPS()
@@ -176,5 +176,5 @@ void window::keyPressEvent(QKeyEvent *event)
 
 void window::FPShandle()
 {    
-    setWindowTitle("Научные Развлечения - вакуумный фотодиод (" + QString::number(World->getFrames()*4) + " итераций/сек)");
+    setWindowTitle("Vacuum photodiode (" + QString::number(World->getFrames()*4) + " iterations/sec)");
 }
