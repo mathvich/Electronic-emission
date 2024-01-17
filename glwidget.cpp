@@ -11,7 +11,8 @@
 
 void drawSquarePolygon(float x, float y, float L)
 {
-    float r=L/15.0;
+    float r = L/15.0;
+
     glBegin(GL_POLYGON);
         glVertex3f(x+L, y+L-r, -0.01);
         glVertex3f(x+L-r, y+L, -0.01);
@@ -154,13 +155,13 @@ void glWidget::resizeGL(int width, int height)
 void glWidget::mousePressEvent(QMouseEvent *event)
 {
     //set reference point
-    //PMouseZero = event->pos();
+    PMouseZero = event->pos();
 }
 
 void glWidget::mouseMoveEvent(QMouseEvent *event)
 {
-    /*
     QPoint MouseDelta = event->pos() - PMouseZero;
+
     //Mouse inversion
     //MouseDelta.setY(MouseDelta.y()*(-1));
 
@@ -172,16 +173,19 @@ void glWidget::mouseMoveEvent(QMouseEvent *event)
         //shift view point
         const float Pi = 3.14159265;
         float alpha = (-Angles.x())/180.0*Pi;
-        setPosition(PCamera + point(cos(alpha)*MouseDelta.x(), sin(alpha)*MouseDelta.x())*(0.015/Scale));
+        setPosition(PCamera + point(cos(alpha)*MouseDelta.x(),
+                                    sin(alpha)*MouseDelta.x())*(0.015/Scale));
         alpha -= 90.0 / 180*Pi;
-        setPosition(PCamera + point(cos(alpha)*MouseDelta.y(), sin(alpha)*MouseDelta.y())*(0.015/Scale));
-    } else if (event->buttons() & Qt::LeftButton)
+        setPosition(PCamera + point(cos(alpha)*MouseDelta.y(),
+                                    sin(alpha)*MouseDelta.y())*(0.015/Scale));
+    }
+    else if (event->buttons() & Qt::LeftButton)
     {
         //rotate across view point
         setRotation(Angles + 1 * MouseDelta);
-    }else if (event->buttons() & Qt::MiddleButton){
+    }
+    else if (event->buttons() & Qt::MiddleButton){
         setScale(Scale*exp(-MouseDelta.y()*log(1.01)));
     }
     PMouseZero = event->pos();
-    */
 }

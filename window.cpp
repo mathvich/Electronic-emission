@@ -92,13 +92,15 @@ void window::updateControls()
 }
 
 void window::initControls()
-{    
+{
+    const int maxWidth = 300;
+
     TemperatureLabel = new QLabel();
     Temperature = new QSlider(Qt::Horizontal);
     Temperature->setMinimum(0);
     Temperature->setMaximum(1500);
     Temperature->setValue(10);
-    Temperature->setMaximumWidth(500);
+    Temperature->setMaximumWidth(maxWidth);
 
     CurrentTemperatureLabel = new QLabel();
 
@@ -107,39 +109,41 @@ void window::initControls()
     PotentialDifference->setMinimum(-500);
     PotentialDifference->setMaximum(750);
     PotentialDifference->setValue(150);
-    PotentialDifference->setMaximumWidth(500);
+    PotentialDifference->setMaximumWidth(maxWidth);
 
     IntensityLabel = new QLabel();
     Intensity = new QSlider(Qt::Horizontal);
     Intensity->setMinimum(0);
     Intensity->setMaximum(10);
     Intensity->setValue(0);
-    Intensity->setMaximumWidth(500);
+    Intensity->setMaximumWidth(maxWidth);
 
     FrequencyLabel = new QLabel();
     Frequency = new QSlider(Qt::Horizontal);
     Frequency->setMinimum(0);
     Frequency->setMaximum(900);
     Frequency->setValue(500);
-    Frequency->setMaximumWidth(500);
+    Frequency->setMaximumWidth(maxWidth);
     FrequencyRainbow = new rainbow;
-    //FrequencyRainbow->setMaximumWidth(500);
     FrequencyRainbow->setMinimumHeight(20);
-
+    FrequencyRainbow->setMaximumHeight(20);
+    FrequencyRainbow->setMaximumWidth(maxWidth);
 
     Accuracy = new QSlider(Qt::Horizontal);
     Accuracy->setMinimum(1);
     Accuracy->setMaximum(10);
     Accuracy->setValue(2);
-    Accuracy->setMaximumWidth(500);
+    Accuracy->setMaximumWidth(maxWidth);
     AccuracyLabel = new QLabel("\nTimestep:");
 }
 
 void window::setAccuracy(int value)
 {
     float dt=0.20*1e-3;
+
     for (int i=0; i<value; ++i)
         dt /= 1.25;
+
     World->set_dt(dt);
 }
 
