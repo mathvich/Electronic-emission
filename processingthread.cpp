@@ -1,7 +1,9 @@
 #include "processingthread.h"
 #include <math.h>
 
-processingThread::processingThread(int _particlesNumber, particle *_particles, int _photonsNumber, particle *_photons, float _dt)
+processingThread::processingThread(int _particlesNumber, particle *_particles,
+                                   int _photonsNumber,   particle *_photons,
+                                   float _dt)
 {
     int threadsNumber = QThread::idealThreadCount();
     calculationThreads.resize(threadsNumber);
@@ -11,16 +13,17 @@ processingThread::processingThread(int _particlesNumber, particle *_particles, i
     framesDone = 0;
     relaxation = true;
 
-    T = 10.0;
-    U = 0.0;
+    T = 10.;
+    U = 0.;
 
     dt = _dt;
 
     photonsNumber = _photonsNumber;
-    photons = _photons;
+    photons       = _photons;
 
     particlesNumber = _particlesNumber;
-    particles = _particles;
+    particles       = _particles;
+
     particlesAux = new particle[particlesNumber];
     k1 = new particle[particlesNumber];
     k2 = new particle[particlesNumber];
@@ -35,7 +38,7 @@ void processingThread::setdt(float _dt)
 
 void processingThread::setT(int _T)
 {
-    T = _T*42.0/1000.0;
+    T = _T * 42. / 1000.;
 }
 
 void processingThread::setU(int _U)
@@ -65,7 +68,7 @@ double hexDegree(double x)
 
 double sqrDegree(double x)
 {
-    return x*x;
+    return x * x;
 }
 
 void processingThread::sumKernel(particle *in1, particle *in2, particle *out, float dt)
@@ -74,8 +77,8 @@ void processingThread::sumKernel(particle *in1, particle *in2, particle *out, fl
 
     for (int i = 0; i < particlesNumber; ++i)
     {
-        out[i].R = in1[i].R + in2[i].R*dt;
-        out[i].dR = in1[i].dR + in2[i].dR*dt;
+        out[i].R  = in1[i].R  + in2[i].R  * dt;
+        out[i].dR = in1[i].dR + in2[i].dR * dt;
     }
 }
 
@@ -85,7 +88,7 @@ void processingThread::forceKernel(particle *in, particle *out)
 
     for (int i=0; i < particlesNumber; ++i)
     {
-        const float e = 1.35*1e-0;//1e-7;	// multiplier for (e/r)^n
+        const float e  = 1.35*1e-0;//1e-7;	// multiplier for (e/r)^n
         const float er = 1.0;	// er*(e/r)^n
 
         const float deepn = 1.6*1e+3;
@@ -102,11 +105,11 @@ void processingThread::forceKernel(particle *in, particle *out)
         if ((in[i].R.x > -1.0) && (in[i].R.x < 1.0)
                 && (in[i].R.y > -1.0) && (in[i].R.y < 1.0))
         {
-            ttmp = hexDegree( in[i].R.x / width );
-            out[i].dR.x += -16.0*deepn*0.1*ttmp / in[i].R.x / sqrDegree(ttmp + 1.0);
+            ttmp = hexDegree(in[i].R.x / width);
+            out[i].dR.x += -16. * deepn * .1 * ttmp / in[i].R.x / sqrDegree(ttmp + 1.);
 
-            ttmp = hexDegree( in[i].R.y / width );
-            out[i].dR.y += -16.0*deepn*0.1*ttmp / in[i].R.y / sqrDegree(ttmp + 1.0);
+            ttmp = hexDegree(in[i].R.y / width);
+            out[i].dR.y += -16. * deepn * .1 * ttmp / in[i].R.y / sqrDegree(ttmp + 1.);
         }
 
 
@@ -125,12 +128,12 @@ void processingThread::forceKernel(particle *in, particle *out)
             const float L = 0.98;
             // Dual infinite wall
             out[i].dR.x += -W*exp(W*(in[i].R.x - L));
-            out[i].dR.x += W*exp(W*(-L - in[i].R.x));
+            out[i].dR.x +=  W*exp(W*(-L - in[i].R.x));
             out[i].dR.y += -W*exp(W*(in[i].R.y - L));
-            out[i].dR.y += W*exp(W*(-L - in[i].R.y));
+            out[i].dR.y +=  W*exp(W*(-L - in[i].R.y));
 
             // Friction
-            out[i].dR = out[i].dR + in[i].dR * (-5.0);
+            out[i].dR = out[i].dR + in[i].dR * (-5.);
         }
 
         /*
@@ -141,15 +144,15 @@ void processingThread::forceKernel(particle *in, particle *out)
     */
 
         // Temperature influence
-        float delta = T-Tcurr;
-        if (delta > 3.0)
-            delta = 3.0;
-        else
-            if (delta < -3.0)
-                delta = -3.0;
+        float delta = T - Tcurr;
+        float deltaTrim = 3.;
+
+        if (delta > deltaTrim)
+            delta = deltaTrim;
+        else if (delta < -deltaTrim)
+            delta = -deltaTrim;
 
         out[i].dR = out[i].dR + in[i].dR * (1.0*delta);
-
 
         // Particle interaction
         for (int j = 0; j < particlesNumber; ++j)
@@ -161,8 +164,8 @@ void processingThread::forceKernel(particle *in, particle *out)
                 //out[i].dR = out[i].dR + r*n*er*expf(-(n + 2.0)*logf(rm/e));
 
                 //electrostatic
-                float rm = r.module()/e;
-                out[i].dR = out[i].dR + r*(er/(rm*rm*rm));
+                float rm = r.module() / e;
+                out[i].dR = out[i].dR + r * (er / (rm * rm * rm));
             }
         }
     }
