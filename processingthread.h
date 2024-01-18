@@ -32,11 +32,12 @@ public slots:
 public:
     void run();
 
-    bool relaxation;
+    bool relaxation = true;
     float Tcurr;
     int particlesNumber;
     int photonsNumber;
 
+    void doCalculation();
     processingThread(int _particlesNumber, particle *_particles, int _photonsNumber, particle *_photons, float _dt=1e-4);
 
     void movePhotons(particle *_photons, float _dt);

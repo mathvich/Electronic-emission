@@ -8,7 +8,7 @@ window::window(QWidget *parent)
     : QWidget(parent)
 {
     this->setWindowTitle("Initializing");
-    Tfilter = 0.0;
+    Tfilter = 0.;
 
     //Graphics
     GLWidget = new glWidget;

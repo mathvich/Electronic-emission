@@ -11,7 +11,6 @@ processingThread::processingThread(int _particlesNumber, particle *_particles,
         calculationThreads[i] = new QThread;
 
     framesDone = 0;
-    relaxation = true;
 
     T = 10.;
     U = 0.;
@@ -171,45 +170,48 @@ void processingThread::forceKernel(particle *in, particle *out)
     }
 }
 
+void processingThread::doCalculation()
+{
+    if (0)
+    {
+        // Euler's calculation method
+        forceKernel(particles, k1);
+        sumKernel(particles, k1, particles, dt);
+    }
+    else
+    {
+        // Runge-Kutta 4 calculation method
+        forceKernel(particles, k1);
+
+        sumKernel(particles, k1, particlesAux, dt / 2.0);
+        forceKernel(particlesAux, k2);
+
+        sumKernel(particles, k2, particlesAux, dt / 2.0);
+        forceKernel(particlesAux, k3);
+
+        sumKernel(particles, k3, particlesAux, dt / 1.0);
+        forceKernel(particlesAux, k4);
+
+        sumKernel(particles, k1, particlesAux, dt / 6.0);
+        sumKernel(particlesAux, k2, particles, dt / 3.0);
+        sumKernel(particles, k3, particlesAux, dt / 3.0);
+        sumKernel(particlesAux, k4, particles, dt / 6.0);
+    }
+
+}
+
 void processingThread::run()
 {
-    unsigned int count = 0;
+    for (unsigned int count=0; count<3000; count++)
+    {
+        doCalculation();
+    }
+
+    relaxation = false;
 
     while (this->isRunning())
     {
-        if (count < 2000)
-            count++;
-        else
-        {
-            relaxation = false;
-            count = 1001;
-        }
-
-        if (0)
-        {
-            // Euler's calculation method
-            forceKernel(particles, k1);
-            sumKernel(particles, k1, particles, dt);
-        }
-        else
-        {
-            // Runge-Kutta 4 calculation method
-            forceKernel(particles, k1);
-
-            sumKernel(particles, k1, particlesAux, dt / 2.0);
-            forceKernel(particlesAux, k2);
-
-            sumKernel(particles, k2, particlesAux, dt / 2.0);
-            forceKernel(particlesAux, k3);
-
-            sumKernel(particles, k3, particlesAux, dt / 1.0);
-            forceKernel(particlesAux, k4);
-
-            sumKernel(particles, k1, particlesAux, dt / 6.0);
-            sumKernel(particlesAux, k2, particles, dt / 3.0);
-            sumKernel(particles, k3, particlesAux, dt / 3.0);
-            sumKernel(particlesAux, k4, particles, dt / 6.0);
-        }
+        doCalculation();
 
         movePhotons(photons, dt);
         photonEnabler(intensity, dt);
@@ -228,7 +230,7 @@ void processingThread::movePhotons(particle *_photons, float _dt)
 
 void processingThread::photonEnabler(int _N, float _dt)
 {
-    static float lastPhotonTime = 0.025;
+    static float lastPhotonTime = .025;
 
     if (lastPhotonTime < 0.0)
     {
@@ -242,7 +244,7 @@ void processingThread::photonEnabler(int _N, float _dt)
                 if (photons[i].enabled == false)
                 {
                     photons[i].initPhoton(true);
-                    lastPhotonTime = 0.25/float(_N+1.0);
+                    lastPhotonTime = .25 / float(_N + 1.);
                     break;
                     ++count;
                 }

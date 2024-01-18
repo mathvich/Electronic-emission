@@ -3,7 +3,7 @@
 
 particle::particle()
 {
-    kineticEnergy = 0.0;
+    kineticEnergy = 0.;
     enabled = false;    
 }
 
