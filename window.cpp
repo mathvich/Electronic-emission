@@ -68,7 +68,7 @@ window::window(QWidget *parent)
     World->startCalc();
 
     TimerReplot = new QTimer();
-    TimerReplot->setInterval(1000/60);
+    TimerReplot->setInterval(1000 / 60);
     connect(TimerReplot, SIGNAL(timeout()), this, SLOT(updatePlots()));
     TimerReplot->start();
 }
@@ -82,12 +82,12 @@ void window::updateControls()
 {
     char tmp[20];
     float val = PotentialDifference->value();
-    sprintf(tmp, "%d", int(val/50.0));
+    sprintf(tmp, "%d", int(val / 50.));
     PotentialDifferenceLabel->setText("Voltage (" + QString(tmp) + " V) : ");
 
     IntensityLabel->setText("Radiation intensity (" + QString::number(1+Intensity->value()) + " units) : ");
 
-    FrequencyLabel->setText("Radiation wavelength (" + QString::number(int(6.0*140000.0/(1200.0+Frequency->value()))) + " nm) : ");
+    FrequencyLabel->setText("Radiation wavelength (" + QString::number(int(6.*140000./(1200.+Frequency->value()))) + " nm) : ");
     //FrequencyRainbow->repaint();
 }
 
@@ -139,9 +139,9 @@ void window::initControls()
 
 void window::setAccuracy(int value)
 {
-    float dt=0.20*1e-3;
+    float dt = 0.2 * 1e-3;
 
-    for (int i=0; i<value; ++i)
+    for (int i = 0; i < value; ++i)
         dt /= 1.25;
 
     World->set_dt(dt);
@@ -150,9 +150,9 @@ void window::setAccuracy(int value)
 void window::updateCurrentTemperature(float value)
 {
     char tmp[20];
-    float alpha = 0.05;
+    float alpha = .05;
     Tfilter = (1.0-alpha)*Tfilter + alpha*value;
-    GLWidget->Tpercent = Tfilter/float(63.0);
+    GLWidget->Tpercent = Tfilter/float(63.);
     //sprintf(tmp, "%5.0f", Tfilter*15.878);
     sprintf(tmp, "%4d", int(Tfilter*15.878));
     CurrentTemperatureLabel->setText("Current Cathode heating temperature = " + QString(tmp));

@@ -8,25 +8,56 @@ world::world(int _Nparticles, int _Nphotons, float _SPDparticles, float _BOXsize
     Nphotons(_Nphotons),
     SPDparticles(_SPDparticles),
     BOXsize(_BOXsize)
-{    
+{
+    // arrays
     a = new particle[Nparticles];
     photons = new particle[Nphotons];
     color = 0;
 
-    //initial positions and speeds of photons
+    // initial positions and speeds of photons
     for (int i=0; i < Nphotons; ++i)
     {
         photons[i].initPhoton(false);
     }
 
-    //initial positions and speeds of particles
+    // initial positions and speeds of particles
     Rstep = 1.75 * BOXsize / sqrt(Nparticles);
     initParticlePositions();
 
     aDraw = a;
 
-    calcThread = new processingThread(Nparticles, a, Nphotons, photons);
+    // threads
+    int threadsNumber = 2;// QThread::idealThreadCount();
+    calculationThreads.resize(threadsNumber);
 
+    // i*n/(t-1), (i+1)*n/(t-1)
+    // n = 17
+    // t = 3
+    // i = 0; i < threadcount
+
+    // i=0lo = 0 * 8; 0
+    // i=0hi = 1 * 8; 8
+    // i=1lo = 1 * 8; 8
+    // i=1hi = 2 * 8; 16
+    // i=2lo = 2 * 8; 16
+    // i=2hi = 3 * 8; 24
+
+    for (int i=0; i < threadsNumber; ++i)
+    {
+        const unsigned int maxIndex = Nparticles - 1;
+        const unsigned int chunkSize = maxIndex / (threadsNumber - 1);
+
+        const unsigned int indexLower = i * chunkSize;
+        unsigned int indexUpper = (i + 1) * chunkSize;
+        indexUpper = indexUpper > maxIndex ? maxIndex : indexUpper;
+
+        calculationThreads[i] = new processingThread(i == 0 ? mainThread : auxThread,
+                                                     indexLower, indexUpper,
+                                                     Nparticles, a, Nphotons, photons);
+    }
+    calcThread = calculationThreads[0];
+
+    // timers
     TimerMeasure = new QTimer();
     TimerMeasure->setInterval(250);
     connect(TimerMeasure, SIGNAL(timeout()), this, SLOT(measureHandle()));
@@ -174,7 +205,9 @@ float world::getT()
 
 void world::startCalc()
 {
-    calcThread->start();
+    // calcThread->start();
+    for (int i=0; i<calculationThreads.size(); ++i)
+        calculationThreads.at(i)->start();
 }
 
 void world::set_dt(float _dt)

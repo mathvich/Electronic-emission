@@ -5,13 +5,18 @@
 #include <vector>
 #include "particle.h"
 
+enum threadTypes
+{
+    mainThread,
+    auxThread,
+    unknownThread
+};
+
 class processingThread : public QThread
 {
     Q_OBJECT
 
 private:
-    std::vector<QThread*> calculationThreads;
-
     float dt;
     float T, U;
     int intensity;
@@ -20,6 +25,9 @@ private:
 
     particle *particles, *particlesAux, *k1, *k2, *k3, *k4;
     particle *photons;
+
+    int indexLower = 0;
+    int indexUpper = 0;
 
 public slots:
     void setdt(float _dt);
@@ -32,13 +40,19 @@ public slots:
 public:
     void run();
 
+    threadTypes threadType = unknownThread;
+
     bool relaxation = true;
     float Tcurr;
     int particlesNumber;
     int photonsNumber;
 
     void doCalculation();
-    processingThread(int _particlesNumber, particle *_particles, int _photonsNumber, particle *_photons, float _dt=1e-4);
+
+    processingThread(threadTypes threadType_, int indexLower_, int indexUpper_,
+                     int _particlesNumber, particle *_particles,
+                     int _photonsNumber, particle *_photons,
+                     float _dt=1e-4);
 
     void movePhotons(particle *_photons, float _dt);
     void photonEnabler(int _N, float _dt);

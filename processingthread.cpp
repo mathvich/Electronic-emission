@@ -1,14 +1,15 @@
 #include "processingthread.h"
 #include <math.h>
+#include <QDebug>
 
-processingThread::processingThread(int _particlesNumber, particle *_particles,
+processingThread::processingThread(threadTypes threadType_, int indexLower_, int indexUpper_,
+                                   int _particlesNumber, particle *_particles,
                                    int _photonsNumber,   particle *_photons,
                                    float _dt)
 {
-    int threadsNumber = QThread::idealThreadCount();
-    calculationThreads.resize(threadsNumber);
-    for (int i=0; i < threadsNumber; ++i)
-        calculationThreads[i] = new QThread;
+    threadType = threadType_;
+    indexLower = indexLower_;
+    indexUpper = indexUpper_;
 
     framesDone = 0;
 
@@ -30,51 +31,12 @@ processingThread::processingThread(int _particlesNumber, particle *_particles,
     k4 = new particle[particlesNumber];
 }
 
-void processingThread::setdt(float _dt)
-{
-    dt = _dt;
-}
-
-void processingThread::setT(int _T)
-{
-    T = _T * 42. / 1000.;
-}
-
-void processingThread::setU(int _U)
-{
-    U = _U;
-}
-
-void processingThread::setIntensity(int _intensity)
-{
-    intensity = _intensity;
-}
-
-void processingThread::setFrequency(float _frequency)
-{
-    frequency = _frequency;
-}
-
-double hexDegree(double x)
-{
-    x *= x; // doub
-    x *= x; // quad
-    x *= x; // octa
-    x *= x; // hexa
-
-    return x;
-}
-
-double sqrDegree(double x)
-{
-    return x * x;
-}
+double sqrDegree(double x);
+double hexDegree(double x);
 
 void processingThread::sumKernel(particle *in1, particle *in2, particle *out, float dt)
 {
-    //int i = threadIdx.x;
-
-    for (int i = 0; i < particlesNumber; ++i)
+    for (int i = indexLower; i < indexUpper; ++i)
     {
         out[i].R  = in1[i].R  + in2[i].R  * dt;
         out[i].dR = in1[i].dR + in2[i].dR * dt;
@@ -83,9 +45,7 @@ void processingThread::sumKernel(particle *in1, particle *in2, particle *out, fl
 
 void processingThread::forceKernel(particle *in, particle *out)
 {
-    //int i = threadIdx.x;
-
-    for (int i=0; i < particlesNumber; ++i)
+    for (int i = indexLower; i < indexUpper; ++i)
     {
         const float e  = 1.35*1e-0;//1e-7;	// multiplier for (e/r)^n
         const float er = 1.0;	// er*(e/r)^n
@@ -183,19 +143,19 @@ void processingThread::doCalculation()
         // Runge-Kutta 4 calculation method
         forceKernel(particles, k1);
 
-        sumKernel(particles, k1, particlesAux, dt / 2.0);
+        sumKernel(particles, k1, particlesAux, dt / 2.);
         forceKernel(particlesAux, k2);
 
-        sumKernel(particles, k2, particlesAux, dt / 2.0);
+        sumKernel(particles, k2, particlesAux, dt / 2.);
         forceKernel(particlesAux, k3);
 
-        sumKernel(particles, k3, particlesAux, dt / 1.0);
+        sumKernel(particles, k3, particlesAux, dt / 1.);
         forceKernel(particlesAux, k4);
 
-        sumKernel(particles, k1, particlesAux, dt / 6.0);
-        sumKernel(particlesAux, k2, particles, dt / 3.0);
-        sumKernel(particles, k3, particlesAux, dt / 3.0);
-        sumKernel(particlesAux, k4, particles, dt / 6.0);
+        sumKernel(particles, k1, particlesAux, dt / 6.);
+        sumKernel(particlesAux, k2, particles, dt / 3.);
+        sumKernel(particles, k3, particlesAux, dt / 3.);
+        sumKernel(particlesAux, k4, particles, dt / 6.);
     }
 
 }
@@ -213,11 +173,14 @@ void processingThread::run()
     {
         doCalculation();
 
-        movePhotons(photons, dt);
-        photonEnabler(intensity, dt);
-        photonInteract();
-
-        framesDone++;
+        if (threadType == mainThread)
+        {
+            movePhotons(photons, dt);
+            photonEnabler(intensity, dt);
+            photonInteract();
+            framesDone++;
+        }
+        // to do: sync here via thread barrier
     }
 }
 
@@ -272,4 +235,44 @@ unsigned long processingThread::getFrames()
     unsigned long tmp = framesDone;
     framesDone = 0;
     return tmp;
+}
+
+void processingThread::setdt(float _dt)
+{
+    dt = _dt;
+}
+
+void processingThread::setT(int _T)
+{
+    T = _T * 42. / 1000.;
+}
+
+void processingThread::setU(int _U)
+{
+    U = _U;
+}
+
+void processingThread::setIntensity(int _intensity)
+{
+    intensity = _intensity;
+}
+
+void processingThread::setFrequency(float _frequency)
+{
+    frequency = _frequency;
+}
+
+double hexDegree(double x)
+{
+    x *= x; // doub
+    x *= x; // quad
+    x *= x; // octa
+    x *= x; // hexa
+
+    return x;
+}
+
+double sqrDegree(double x)
+{
+    return x * x;
 }

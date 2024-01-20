@@ -16,7 +16,9 @@ class world : public QWidget
     float BOXsize;
     float Rstep;
     float Tcurr;
+
     processingThread *calcThread;
+    std::vector<processingThread*> calculationThreads;
 
     QTimer *TimerMeasure;
 
